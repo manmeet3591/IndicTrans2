@@ -33,6 +33,7 @@ if command -v parallel &> /dev/null; then
 fi
 
 # get a list of language pairs in the `train_data_dir`
+#pairs=$(ls -d $train_data_dir/* | sort)
 pairs=$(ls -d $train_data_dir/* | sort)
 
 
@@ -68,12 +69,20 @@ for pair in ${pairs[@]}; do
     # --------------------------------------------------------------------------
     #                           train preprocessing
     # --------------------------------------------------------------------------
-	train_infname_src=$train_data_dir/${src_lang}-${tgt_lang}/train.$src_lang
-	train_infname_tgt=$train_data_dir/${src_lang}-${tgt_lang}/train.$tgt_lang
+	#train_infname_src=$train_data_dir/${src_lang}-${tgt_lang}/train.$src_lang
+	#train_infname_tgt=$train_data_dir/${src_lang}-${tgt_lang}/train.$tgt_lang
+	#train_outfname_src=$train_norm_dir/train.$src_lang
+	#train_outfname_tgt=$train_norm_dir/train.$tgt_lang
+
+	train_infname_src=$train_data_dir/$pair/train.$src_lang
+	train_infname_tgt=$train_data_dir/$pair/train.$tgt_lang
 	train_outfname_src=$train_norm_dir/train.$src_lang
 	train_outfname_tgt=$train_norm_dir/train.$tgt_lang
 
     echo "Normalizing punctuations for train"
+    echo "train_infname_src: $train_infname_src"
+    echo "train_infname_tgt: $train_infname_tgt"
+    echo $src_lang
     if $parallel_installed; then
         parallel --pipe --keep-order bash $root/normalize_punctuation.sh $src_lang < $train_infname_src > $train_outfname_src._norm
         parallel --pipe --keep-order bash $root/normalize_punctuation.sh $tgt_lang < $train_infname_tgt > $train_outfname_tgt._norm
@@ -81,45 +90,60 @@ for pair in ${pairs[@]}; do
         bash $root/normalize_punctuation.sh $src_lang < $train_infname_src > $train_outfname_src._norm
         bash $root/normalize_punctuation.sh $tgt_lang < $train_infname_tgt > $train_outfname_tgt._norm
     fi
-
+rm -rf /content/IndicTrans2/data/mun_Deva-hin_Deva/norm/train.hin_Deva.tokenized-train.hin_Deva.tokenized
+rm -rf /content/IndicTrans2/data/mun_Deva-hin_Deva/norm/train.mun_Deva.tokenized-train.mun_Deva.tokenized
 	# add do not translate tags to handle special failure cases
     echo "Applying do not translate tags for train"
-    python3 scripts/normalize_regex.py $train_outfname_src._norm $train_outfname_tgt._norm $train_outfname_src.norm $train_outfname_tgt.norm
 
-	echo "Applying normalization and script conversion for train"
+pairs=$(ls -d $train_data_dir | grep -oP '^[^.]+(?=\.)' | uniq | sort)
+
+#src_lang=$(basename "$pair" | cut -d "-" -f 1)
+#tgt_lang=$(basename "$pair" | cut -d "-" -f 2)
+src_lang="mun_Deva"  # Hardcode your source language if only one pair exists
+tgt_lang="hin_Deva"  # Hardcode your target language
+
+
+train_infname_src=$train_data_dir/train.$src_lang
+train_infname_tgt=$train_data_dir/train.$tgt_lang
+echo "train_outfname_src: $train_outfname_src"
+echo "train_outfname_tgt: $train_outfname_tgt"
+
+#    python3 scripts/normalize_regex.py $train_outfname_src._norm $train_outfname_tgt._norm $train_outfname_src.norm $train_outfname_tgt.norm
+#
+#	echo "Applying normalization and script conversion for train"
     # this script preprocesses the text and for indic languages, converts script to devanagari if needed
-	input_size=`python3 scripts/preprocess_translate.py $train_outfname_src.norm $train_outfname_src $src_lang $src_transliterate false`
-	input_size=`python3 scripts/preprocess_translate.py $train_outfname_tgt.norm $train_outfname_tgt $tgt_lang $tgt_transliterate true`
-	echo "Number of sentences in train: $input_size"
+#	input_size=`python3 scripts/preprocess_translate.py $train_outfname_src.norm $train_outfname_src $src_lang $src_transliterate false`
+#	input_size=`python3 scripts/preprocess_translate.py $train_outfname_tgt.norm $train_outfname_tgt $tgt_lang $tgt_transliterate true`
+#	echo "Number of sentences in train: $input_size"
 
 
     # --------------------------------------------------------------------------
     #                              dev preprocessing
     # --------------------------------------------------------------------------
-	dev_infname_src=$devtest_data_dir/${src_lang}-${tgt_lang}/dev.$src_lang
-	dev_infname_tgt=$devtest_data_dir/${src_lang}-${tgt_lang}/dev.$tgt_lang
-	dev_outfname_src=$devtest_norm_dir/dev.$src_lang
-	dev_outfname_tgt=$devtest_norm_dir/dev.$tgt_lang
-
-    echo "Normalizing punctuations for dev"
-    if $parallel_installed; then
-        parallel --pipe --keep-order bash normalize_punctuation.sh $src_lang < $dev_infname_src > $dev_outfname_src._norm
-        parallel --pipe --keep-order bash normalize_punctuation.sh $tgt_lang < $dev_infname_tgt > $dev_outfname_tgt._norm
-    else
-        bash normalize_punctuation.sh $src_lang < $dev_infname_src > $dev_outfname_src._norm
-        bash normalize_punctuation.sh $tgt_lang < $dev_infname_tgt > $dev_outfname_tgt._norm
-    fi
+#	dev_infname_src=$devtest_data_dir/${src_lang}-${tgt_lang}/dev.$src_lang
+#	dev_infname_tgt=$devtest_data_dir/${src_lang}-${tgt_lang}/dev.$tgt_lang
+#	dev_outfname_src=$devtest_norm_dir/dev.$src_lang
+#	dev_outfname_tgt=$devtest_norm_dir/dev.$tgt_lang
+#
+#    echo "Normalizing punctuations for dev"
+#    if $parallel_installed; then
+#        parallel --pipe --keep-order bash normalize_punctuation.sh $src_lang < $dev_infname_src > $dev_outfname_src._norm
+#        parallel --pipe --keep-order bash normalize_punctuation.sh $tgt_lang < $dev_infname_tgt > $dev_outfname_tgt._norm
+#    else
+#        bash normalize_punctuation.sh $src_lang < $dev_infname_src > $dev_outfname_src._norm
+#        bash normalize_punctuation.sh $tgt_lang < $dev_infname_tgt > $dev_outfname_tgt._norm
+#    fi
 
 	# add do not translate tags to handle special failure cases
-    echo "Applying do not translate tags for dev"
-    python3 scripts/normalize_regex.py $dev_outfname_src._norm $dev_outfname_tgt._norm $dev_outfname_src.norm $dev_outfname_tgt.norm
-
-    echo "Applying normalization and script conversion for dev"
-    # this script preprocesses the text and for indic languages, converts script to devanagari if needed
-	input_size=`python scripts/preprocess_translate.py $dev_outfname_src.norm $dev_outfname_src $src_lang $src_transliterate false`
-	input_size=`python scripts/preprocess_translate.py $dev_outfname_tgt.norm $dev_outfname_tgt $tgt_lang $tgt_transliterate true`
-	echo "Number of sentences in dev: $input_size"
-done
+#    echo "Applying do not translate tags for dev"
+#    python3 scripts/normalize_regex.py $dev_outfname_src._norm $dev_outfname_tgt._norm $dev_outfname_src.norm $dev_outfname_tgt.norm
+#
+#    echo "Applying normalization and script conversion for dev"
+#    # this script preprocesses the text and for indic languages, converts script to devanagari if needed
+#	input_size=`python scripts/preprocess_translate.py $dev_outfname_src.norm $dev_outfname_src $src_lang $src_transliterate false`
+#	input_size=`python scripts/preprocess_translate.py $dev_outfname_tgt.norm $dev_outfname_tgt $tgt_lang $tgt_transliterate true`
+#	echo "Number of sentences in dev: $input_size"
+#done
 
 
 # this concatenates lang pair data and creates text files to keep track of number of 
@@ -130,29 +154,29 @@ done
 # <lang1> <lang2> <number of lines>
 # lang1-lang2 n1
 # lang1-lang3 n2
-python scripts/concat_joint_data.py $exp_dir/norm $exp_dir/data 'train'
-python scripts/concat_joint_data.py $exp_dir/norm $exp_dir/data 'dev'
+#python scripts/concat_joint_data.py $exp_dir/norm $exp_dir/data 'train'
+#python scripts/concat_joint_data.py $exp_dir/norm $exp_dir/data 'dev'
 
 
-# tokenization of train and dev set using the spm trained models
-mkdir -p $exp_dir/bpe
-
-splits=(train dev)
-for split in ${splits[@]}; do
-	echo "Applying sentence piece for $split"
-	bash apply_sentence_piece.sh $exp_dir $exp_dir/data $exp_dir/bpe SRC TGT $split $parallel_installed
-done
-
+## tokenization of train and dev set using the spm trained models
+#mkdir -p $exp_dir/bpe
+#
+#splits=(train dev)
+#for split in ${splits[@]}; do
+#	echo "Applying sentence piece for $split"
+#	bash apply_sentence_piece.sh $exp_dir $exp_dir/data $exp_dir/bpe SRC TGT $split $parallel_installed
+#done
+#
 
 # this is only required for joint training
 # we apply language tags to the bpe segmented data
 # if we are translating lang1 to lang2 then <lang1 line> will become <lang1> <lang2> <lang1 line>
-mkdir -p $exp_dir/final
-
-echo "Adding language tags"
-python scripts/add_joint_tags_translate.py $exp_dir 'train'
-python scripts/add_joint_tags_translate.py $exp_dir 'dev'
-
+#mkdir -p $exp_dir/final
+#
+#echo "Adding language tags"
+#python scripts/add_joint_tags_translate.py $exp_dir 'train'
+#python scripts/add_joint_tags_translate.py $exp_dir 'dev'
+#
 
 # this is important step if you are training with tpu and using num_batch_buckets
 # the current implementation does not remove outliers before bucketing and hence
